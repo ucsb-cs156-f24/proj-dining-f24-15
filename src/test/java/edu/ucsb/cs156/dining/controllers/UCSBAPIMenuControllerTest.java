@@ -9,9 +9,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.ucsb.cs156.dining.ControllerTestCase;
 import edu.ucsb.cs156.dining.config.SecurityConfig;
-import edu.ucsb.cs156.dining.entities.UCSBAPIDiningCommons;
-import edu.ucsb.cs156.dining.repositories.UserRepository;
-import edu.ucsb.cs156.dining.services.UCSBAPIDiningCommonsService;
+import edu.ucsb.cs156.dining.models.Meal;
+import edu.ucsb.cs156.dining.services.UCSBAPIMenuService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,52 +24,61 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-@WebMvcTest(UCSBAPIDiningCommonsController.class)
+@WebMvcTest(UCSBAPIMenuController.class)
 @Import(SecurityConfig.class)
 @AutoConfigureDataJpa
-public class UCSBAPIDiningCommonsControllerTest extends ControllerTestCase {
+public class UCSBAPIMenuControllerTest extends ControllerTestCase {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-    private UCSBAPIDiningCommonsService diningCommonsService;
+    private UCSBAPIMenuService menuService;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     @Test
-    public void logged_out_users_cannot_get_all() throws Exception {
-        mockMvc.perform(get("/api/diningcommons/all"))
+    public void logged_out_users_cannot_access_getMeals() throws Exception {
+        mockMvc.perform(get("/api/diningcommons/2024-11-20/de-la-guerra"))
             .andExpect(status().is(403)); // Expect 403 Forbidden for logged-out users
     }
 
     @WithMockUser(roles = { "USER" })
     @Test
-    public void logged_in_users_can_get_all() throws Exception {
-        // Arrange: Create a sample list of dining commons
-        UCSBAPIDiningCommons carrillo = new UCSBAPIDiningCommons(
-            "Carrillo", "carrillo", false, false, true, 
-            new UCSBAPIDiningCommons.Location(34.409953, -119.85277)
-        );
+    public void logged_in_users_can_access_getMeals() throws Exception {
+        // Arrange: Create a sample list of meals
+        Meal breakfast = new Meal();
+        breakfast.setName("Breakfast");
+        breakfast.setCode("breakfast");
 
-        List<UCSBAPIDiningCommons> expectedResult = new ArrayList<>();
-        expectedResult.add(carrillo);
+        Meal lunch = new Meal();
+        lunch.setName("Lunch");
+        lunch.setCode("lunch");
+        
+        Meal dinner = new Meal();
+        dinner.setName("Dinner");
+        dinner.setCode("dinner");
 
-        when(diningCommonsService.getAllDiningCommons()).thenReturn(expectedResult);
+        List<Meal> expectedMeals = new ArrayList<>();
+        expectedMeals.add(breakfast);
+        expectedMeals.add(lunch);
+        expectedMeals.add(dinner);
+
+        when(menuService.getMeals("2024-11-20", "de-la-guerra")).thenReturn(expectedMeals);
 
         // Act
         MvcResult response = mockMvc
-            .perform(get("/api/diningcommons/all")
+            .perform(get("/api/diningcommons/2024-11-20/de-la-guerra")
             .contentType("application/json"))
-            .andExpect(status().isOk())  // Expect HTTP 200
+            .andExpect(status().isOk()) // Expect HTTP 200
             .andReturn();
 
         // Assert
-        List<UCSBAPIDiningCommons> actualResult = objectMapper.readValue(
+        List<Meal> actualMeals = objectMapper.readValue(
             response.getResponse().getContentAsString(),
-            new TypeReference<List<UCSBAPIDiningCommons>>() {}
+            new TypeReference<List<Meal>>() {}
         );
-        assertEquals(expectedResult, actualResult);
+        assertEquals(expectedMeals, actualMeals);
     }
 }
