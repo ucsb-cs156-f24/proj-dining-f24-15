@@ -4,6 +4,7 @@ import edu.ucsb.cs156.dining.entities.MenuItemReview;
 import edu.ucsb.cs156.dining.entities.MenuItem;
 import edu.ucsb.cs156.dining.errors.EntityNotFoundException;
 import edu.ucsb.cs156.dining.repositories.MenuItemReviewRepository;
+import edu.ucsb.cs156.dining.services.CurrentUserService;
 import edu.ucsb.cs156.dining.repositories.MenuItemRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -46,6 +47,9 @@ public class MenuItemReviewController extends ApiController {
     @Autowired
     MenuItemRepository menuItemRepository;
 
+    @Autowired
+    private CurrentUserService currentUserService;
+
 
     /**
      * Get all reviews for a given user -> the user that is logged in
@@ -53,10 +57,9 @@ public class MenuItemReviewController extends ApiController {
     @Operation(summary= "Get all reviews for a given user")
     @PreAuthorize("hasRole('ROLE_USER')")
     @GetMapping("/reviews")
-    public Iterable<MenuItemReview> getMenuItemReviewsByUser(Authentication authentication) {
-        String username = authentication.getName();
-        
-        return reviews;
+    public Iterable<MenuItemReview> getMenuItemReviewsByUser() {
+        long studentUserId = currentUserService.getCurrentUser().getUser().getId();
+        return menuItemReviewRepository.findByStudentUserId(studentUserId);
     }
 
     

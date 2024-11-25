@@ -39,6 +39,8 @@ public class MenuItemReview {
   private String status;
   private long moderatorUserId;
   private String moderatorComments;
+  private int rating;
+  private String reviewText;
   private LocalDateTime createdDate;
   private LocalDateTime lastEditedDate;
 
