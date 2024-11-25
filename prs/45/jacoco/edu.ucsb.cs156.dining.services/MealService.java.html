@@ -14,10 +14,13 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 /** Service class to interact with Meal */
 @Service
-<span class="fc" id="L20">@Slf4j</span>
+<span class="fc" id="L23">@Slf4j</span>
 public class MealService {
 
   @Value(&quot;${app.ucsb.api.consumer_key}&quot;)
@@ -25,14 +28,14 @@ public class MealService {
 
   private final RestTemplate restTemplate;
 
-<span class="fc" id="L28">  public MealService(RestTemplateBuilder restTemplateBuilder) {</span>
-<span class="fc" id="L29">    this.restTemplate = restTemplateBuilder.build();</span>
-<span class="fc" id="L30">  }</span>
+<span class="fc" id="L31">  public MealService(RestTemplateBuilder restTemplateBuilder) {</span>
+<span class="fc" id="L32">    this.restTemplate = restTemplateBuilder.build();</span>
+<span class="fc" id="L33">  }</span>
 
   private static final String MEAL_ENDPOINT =
       &quot;https://api.ucsb.edu/dining/menu/v1/&quot;;
 
-<span class="fc" id="L35">  private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd&quot;);</span>
+<span class="fc" id="L38">  private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd&quot;);</span>
 
   /**
    * Fetches all meals served in a particular dining commons on a specific date.
@@ -44,29 +47,32 @@ public class MealService {
    */
   public List&lt;Meal&gt; getMeals(LocalDateTime dateTime, String diningCommonsCode) throws Exception {
     // Convert LocalDateTime to YYYY-MM-DD format
-<span class="fc" id="L47">    String formattedDate = dateTime.format(DATE_FORMATTER);</span>
+<span class="fc" id="L50">    String formattedDate = dateTime.format(DATE_FORMATTER);</span>
 
-<span class="fc" id="L49">    String url = String.format(&quot;%s%s/%s&quot;, MEAL_ENDPOINT, formattedDate, diningCommonsCode);</span>
+<span class="fc" id="L52">    String url = String.format(&quot;%s%s/%s&quot;, MEAL_ENDPOINT, formattedDate, diningCommonsCode);</span>
 
-<span class="fc" id="L51">    HttpHeaders headers = new HttpHeaders();</span>
-<span class="fc" id="L52">    headers.set(&quot;ucsb-api-key&quot;, this.apiKey);</span>
-<span class="fc" id="L53">    headers.set(&quot;accept&quot;, &quot;application/json&quot;);</span>
+<span class="fc" id="L54">    HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L55">    headers.set(&quot;ucsb-api-key&quot;, this.apiKey);</span>
+<span class="fc" id="L56">    headers.set(&quot;accept&quot;, &quot;application/json&quot;);</span>
 
-<span class="fc" id="L55">    HttpEntity&lt;String&gt; entity = new HttpEntity&lt;&gt;(&quot;body&quot;, headers);</span>
+<span class="fc" id="L58">    HttpEntity&lt;String&gt; entity = new HttpEntity&lt;&gt;(&quot;body&quot;, headers);</span>
 
-<span class="fc" id="L57">    log.info(&quot;Fetching meals for date: {}, dining commons: {}&quot;, formattedDate, diningCommonsCode);</span>
+<span class="fc" id="L60">    log.info(&quot;Fetching meals for date: {}, dining commons: {}&quot;, formattedDate, diningCommonsCode);</span>
 
-    // Use RestTemplate to fetch data
-<span class="fc" id="L60">    ResponseEntity&lt;Meal[]&gt; response = restTemplate.exchange(</span>
-        url, HttpMethod.GET, entity, Meal[].class);
+    try {
+<span class="fc" id="L63">        ResponseEntity&lt;Meal[]&gt; response = restTemplate.exchange(</span>
+            url, HttpMethod.GET, entity, Meal[].class);
 
-<span class="fc" id="L63">    Meal[] mealsArray = response.getBody();</span>
-<span class="fc bfc" id="L64" title="All 2 branches covered.">    if (mealsArray == null) {</span>
-<span class="fc" id="L65">      throw new Exception(&quot;Failed to fetch meals data from API&quot;);</span>
+<span class="fc" id="L66">        Meal[] mealsArray = response.getBody();</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        if (mealsArray == null) {</span>
+<span class="fc" id="L68">            throw new Exception(&quot;Failed to fetch meals data from API&quot;);</span>
+        }
+
+<span class="fc" id="L71">        return List.of(mealsArray);</span>
+<span class="fc" id="L72">    } catch (HttpClientErrorException.NotFound e) {</span>
+<span class="fc" id="L73">        log.error(&quot;API returned 404 for date: {} and dining commons: {}&quot;, formattedDate, diningCommonsCode);</span>
+<span class="fc" id="L74">        throw new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Meals not found for given date and dining commons&quot;);</span>
     }
-
-<span class="fc" id="L68">    return List.of(mealsArray);</span>
   }
-
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
