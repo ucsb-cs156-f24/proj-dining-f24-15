@@ -27,8 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
-import jakarta.validation.Valid;
 import java.time.LocalDateTime;
+
 
 
 /**
@@ -89,16 +89,5 @@ import java.time.LocalDateTime;
 <span class="fc" id="L89">        return savedMenuItemReview;</span>
     }
 
-
-    /**
-     * List all menu item reviews with status &quot;Awaiting Moderation&quot; -&gt; ADMIN ONLY
-     */
-    @Operation(summary= &quot;List all menu item reviews&quot;)
-    @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
-    @GetMapping(&quot;/all&quot;)
-    public Iterable&lt;MenuItemReview&gt; allAwawitingModerationMenuItemReviewAdminOnly() {
-<span class="fc" id="L100">        Iterable&lt;MenuItemReview&gt; reviews = menuItemReviewRepository.findByStatus(&quot;Awaiting Moderation&quot;);</span>
-<span class="fc" id="L101">        return reviews;</span>
-    }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
