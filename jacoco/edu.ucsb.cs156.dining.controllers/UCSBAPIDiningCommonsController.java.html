@@ -23,10 +23,9 @@ import java.util.List;
   private UCSBAPIDiningCommonsService diningCommonsService;
 
   @Operation(summary = &quot;Get all dining commons from UCSB API&quot;)
-  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
   @GetMapping(&quot;/all&quot;)
   public List&lt;UCSBAPIDiningCommons&gt; getAllDiningCommons() throws Exception {
-<span class="fc" id="L29">    return diningCommonsService.getAllDiningCommons();</span>
+<span class="fc" id="L28">    return diningCommonsService.getAllDiningCommons();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
