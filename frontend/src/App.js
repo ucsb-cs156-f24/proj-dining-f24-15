@@ -17,6 +17,7 @@ import PlaceholderEditPage from "main/pages/Placeholder/PlaceholderEditPage";
 
 import MenuItemPage from "main/pages/MenuItem/MenuItemPage";
 import DiningCommonsPage from "main/pages/DiningCommons/DiningCommonsPage";
+import ReviewsPage from "main/pages/Reviews/ReviewsPage";
 
 import { hasRole, useCurrentUser } from "main/utils/currentUser";
 
@@ -114,6 +115,15 @@ function App() {
               exact
               path="/diningcommons/:diningCommonsCode"
               element={<DiningCommonsPage />}
+            />
+          </>
+        )}
+        {hasRole(currentUser, "ROLE_USER") && (
+          <>
+            <Route
+              exact
+              path="/reviews/:itemid"
+              element={<ReviewsPage />}
             />
           </>
         )}
