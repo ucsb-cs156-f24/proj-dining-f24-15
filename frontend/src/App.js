@@ -120,11 +120,7 @@ function App() {
         )}
         {hasRole(currentUser, "ROLE_USER") && (
           <>
-            <Route
-              exact
-              path="/reviews/:itemid"
-              element={<ReviewsPage />}
-            />
+            <Route exact path="/reviews/:itemid" element={<ReviewsPage />} />
           </>
         )}
       </Routes>
