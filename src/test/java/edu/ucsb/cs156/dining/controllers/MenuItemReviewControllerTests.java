@@ -40,6 +40,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.ArgumentCaptor;
 
 @WebMvcTest(controllers = MenuItemReviewController.class)
 @Import(TestConfig.class)
@@ -174,6 +176,119 @@ public class MenuItemReviewControllerTests extends ControllerTestCase {
 
                 verify(menuItemRepository, times(1)).findById(1L);
                 verify(menuItemReviewRepository, times(0)).save(any(MenuItemReview.class));
+        }
+
+        @WithMockUser(roles = { "ADMIN", "USER" })
+        @Test
+        public void admin_can_edit_an_existing_review() throws Exception {
+                // arrange
+                LocalDateTime now = LocalDateTime.now();
+                MenuItem mockMenuItem = new MenuItem();
+                when(menuItemRepository.findById(1L)).thenReturn(Optional.of(mockMenuItem));
+
+                User mockUser = User.builder().id(100L).build();
+                CurrentUser mockCurrentUser = CurrentUser.builder().user(mockUser).build();
+
+                when(currentUserService.getCurrentUser()).thenReturn(mockCurrentUser);
+
+                LocalDateTime ldt1 = LocalDateTime.parse("2022-01-03T00:00:00");
+                LocalDateTime ldt2 = LocalDateTime.parse("2023-01-03T00:00:00");
+
+                MenuItemReview menuItemReviewOrig = MenuItemReview.builder()
+                                .id(1L)
+                                .studentUserId(100L)
+                                .menuItem(mockMenuItem)
+                                .itemServedDate(LocalDateTime.parse("2024-11-24T09:00:00"))
+                                .status("Awaiting Moderation")
+                                .rating(5)
+                                .reviewText("Great food!")
+                                .createdDate(ldt1)
+                                .lastEditedDate(ldt1)
+                                .build();
+
+                MenuItemReview menuItemReviewEdited = MenuItemReview.builder()
+                                .id(1L)
+                                .studentUserId(100L)
+                                .menuItem(mockMenuItem)
+                                .itemServedDate(LocalDateTime.parse("2024-11-24T09:00:00"))
+                                .status("Awaiting Moderation")
+                                .rating(4)
+                                .reviewText("Good food.")
+                                .createdDate(ldt1)
+                                .lastEditedDate(now)
+                                .build();
+
+                String requestBody = mapper.writeValueAsString(menuItemReviewEdited);
+
+                when(menuItemReviewRepository.findById(eq(1L))).thenReturn(Optional.of(menuItemReviewEdited));
+
+                // act
+                MvcResult response = mockMvc.perform(
+                                put("/api/menuitemreviews?id=1")
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .characterEncoding("utf-8")
+                                                .content(requestBody)
+                                                .with(csrf()))
+                                .andExpect(status().isOk()).andReturn();
+
+                // assert
+                verify(menuItemReviewRepository, times(1)).findById(1L);
+                verify(menuItemReviewRepository, times(1)).save(menuItemReviewEdited); // should be saved with correct user
+
+                ArgumentCaptor<MenuItemReview> captor = ArgumentCaptor.forClass(MenuItemReview.class);
+                verify(menuItemReviewRepository, times(1)).save(captor.capture());
+
+                MenuItemReview savedReview = captor.getValue();
+                assertEquals(4, savedReview.getRating());
+                assertEquals("Good food.", savedReview.getReviewText());
+                assertNotNull(savedReview.getLastEditedDate());
+
+        }
+
+        @WithMockUser(roles = { "ADMIN", "USER" })
+        @Test
+        public void admin_cannot_edit_review_that_does_not_exist() throws Exception {
+                // arrange
+                MenuItem mockMenuItem = new MenuItem();
+                when(menuItemRepository.findById(1L)).thenReturn(Optional.of(mockMenuItem));
+
+                User mockUser = User.builder().id(100L).build();
+                CurrentUser mockCurrentUser = CurrentUser.builder().user(mockUser).build();
+
+                when(currentUserService.getCurrentUser()).thenReturn(mockCurrentUser);
+
+                LocalDateTime ldt1 = LocalDateTime.parse("2022-01-03T00:00:00");
+
+                MenuItemReview menuItemReviewOrig = MenuItemReview.builder()
+                                .id(1L)
+                                .studentUserId(100L)
+                                .menuItem(mockMenuItem)
+                                .itemServedDate(LocalDateTime.parse("2024-11-24T09:00:00"))
+                                .status("Awaiting Moderation")
+                                .rating(5)
+                                .reviewText("Great food!")
+                                .createdDate(ldt1)
+                                .lastEditedDate(ldt1)
+                                .build();
+
+                String requestBody = mapper.writeValueAsString(menuItemReviewOrig);
+
+                when(menuItemReviewRepository.findById(eq(67L))).thenReturn(Optional.empty());
+
+                // act
+                MvcResult response = mockMvc.perform(
+                                put("/api/menuitemreviews?id=67")
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .characterEncoding("utf-8")
+                                                .content(requestBody)
+                                                .with(csrf()))
+                                .andExpect(status().isNotFound()).andReturn();
+
+                // assert
+                verify(menuItemReviewRepository, times(1)).findById(67L);
+                Map<String, Object> json = responseToJson(response);
+                assertEquals("MenuItemReview with id 67 not found", json.get("message"));
+
         }
 
 

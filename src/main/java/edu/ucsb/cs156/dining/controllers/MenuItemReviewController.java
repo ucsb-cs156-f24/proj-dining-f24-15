@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
 
@@ -88,5 +89,51 @@ public class MenuItemReviewController extends ApiController {
 
         return savedMenuItemReview;
     }
+
+    /**
+     * Update a single review by changing star value and/or text.
+     * @param code code of the diningcommons
+     * @param incoming the new commons contents
+     * @return the updated commons object
+     */
+    @Operation(summary= "Update a single review")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PutMapping("")
+    public MenuItemReview updateReview(
+            @Parameter(name="id") @RequestParam Long id,
+            @RequestBody @Valid MenuItemReview incoming) {
+
+
+        MenuItemReview menuItemReview = menuItemReviewRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(MenuItemReview.class, id));
+        LocalDateTime now = LocalDateTime.now();
+
+        menuItemReview.setRating(incoming.getRating());
+        menuItemReview.setReviewText(incoming.getReviewText());
+        menuItemReview.setLastEditedDate(now);
+
+        menuItemReviewRepository.save(menuItemReview);
+
+        return menuItemReview;
+    }
+
+
+    /**
+     * Delete a MenuItemReview (allows user to delete their own review or admin to delete any review)
+     * 
+     * @param id the id of the date to delete
+     * @return a message indicating the date was deleted
+     *//*
+    @Operation(summary= "Delete a UCSBDate")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @DeleteMapping("")
+    public Object deleteUCSBDate(
+            @Parameter(name="id") @RequestParam Long id) {
+        UCSBDate ucsbDate = ucsbDateRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(UCSBDate.class, id));
+
+        ucsbDateRepository.delete(ucsbDate);
+        return genericMessage("UCSBDate with id %s deleted".formatted(id));
+    }*/
 
 }
