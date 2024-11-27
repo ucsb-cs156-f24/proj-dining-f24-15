@@ -19,6 +19,8 @@ import MenuItemPage from "main/pages/MenuItem/MenuItemPage";
 import DiningCommonsPage from "main/pages/DiningCommons/DiningCommonsPage";
 import ReviewsPage from "main/pages/Reviews/ReviewsPage";
 
+import MyReviewsPage from "main/pages/MyReviews/MyReviewsPage";
+
 import { hasRole, useCurrentUser } from "main/utils/currentUser";
 
 import "bootstrap/dist/css/bootstrap.css";
@@ -109,13 +111,10 @@ function App() {
             />
           </>
         )}
+
         {hasRole(currentUser, "ROLE_USER") && (
           <>
-            <Route
-              exact
-              path="/diningcommons/:diningCommonsCode"
-              element={<DiningCommonsPage />}
-            />
+            <Route exact path="/myreviews" element={<MyReviewsPage />} />
           </>
         )}
         {hasRole(currentUser, "ROLE_USER") && (
@@ -123,6 +122,13 @@ function App() {
             <Route exact path="/reviews/:itemid" element={<ReviewsPage />} />
           </>
         )}
+        <>
+          <Route
+            exact
+            path="/diningcommons/:diningCommonsCode"
+            element={<DiningCommonsPage />}
+          />
+        </>
       </Routes>
     </BrowserRouter>
   );
