@@ -30,7 +30,6 @@ import org.springframework.http.HttpStatus;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 
-
 /**
  * This is a REST controller for MenuItemReview
  */
@@ -38,8 +37,8 @@ import java.time.LocalDateTime;
 @Tag(name = &quot;MenuItemReview&quot;)
 @RequestMapping(&quot;/api/menuitemreviews&quot;)
 @RestController
-<span class="fc" id="L41">@Slf4j</span>
-<span class="fc" id="L42">public class MenuItemReviewController extends ApiController {</span>
+<span class="fc" id="L40">@Slf4j</span>
+<span class="fc" id="L41">public class MenuItemReviewController extends ApiController {</span>
 
     @Autowired
     MenuItemReviewRepository menuItemReviewRepository;
@@ -50,7 +49,6 @@ import java.time.LocalDateTime;
     @Autowired
     private CurrentUserService currentUserService;
 
-
     /**
      * Get all reviews for a given user -&gt; the user that is logged in
      */
@@ -58,11 +56,49 @@ import java.time.LocalDateTime;
     @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
     @GetMapping(&quot;/reviews&quot;)
     public Iterable&lt;MenuItemReview&gt; getMenuItemReviewsByUser() {
-<span class="fc" id="L61">        long studentUserId = currentUserService.getCurrentUser().getUser().getId();</span>
-<span class="fc" id="L62">        return menuItemReviewRepository.findByStudentUserId(studentUserId);</span>
+<span class="fc" id="L59">        long studentUserId = currentUserService.getCurrentUser().getUser().getId();</span>
+<span class="fc" id="L60">        return menuItemReviewRepository.findByStudentUserId(studentUserId);</span>
     }
 
     
+    /**
+     * Create a new menu item review -&gt; all users
+     */
+
+    @Operation(summary= &quot;Create a new menu item review&quot;)
+    @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+    @PostMapping(&quot;/post&quot;)
+    public MenuItemReview postMenuItemReview(
+            @Parameter(name=&quot;itemId&quot;) @RequestParam long itemId,
+            @Parameter(name=&quot;itemServedDate&quot;, description=&quot;date (in iso format, e.g. YYYY-mm-ddTHH:MM:SS&quot;) @RequestParam(&quot;itemServedDate&quot;) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime itemServedDate,
+            @Parameter(name=&quot;rating&quot;, description=&quot;Leave a rating numerbed 1-5&quot;) @RequestParam int rating,
+            @Parameter(name=&quot;reviewText&quot;) @RequestParam String reviewText)
+    
+            throws JsonProcessingException {
+
+<span class="fc" id="L79">            MenuItem menuItem = menuItemRepository.findById(itemId).orElseThrow(() -&gt; </span>
+<span class="fc" id="L80">                new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;MenuItem with ID &quot; + itemId + &quot; not found&quot;));</span>
+
+<span class="fc" id="L82">        log.info(&quot;itemServedDate={}&quot;, itemServedDate);</span>
+
+<span class="fc" id="L84">        long studentUserId = currentUserService.getCurrentUser().getUser().getId();</span>
+
+<span class="fc" id="L86">        MenuItemReview menuItemReview = new MenuItemReview();</span>
+<span class="fc" id="L87">        menuItemReview.setStudentUserId(studentUserId);</span>
+<span class="fc" id="L88">        menuItemReview.setMenuItem(menuItem);</span>
+<span class="fc" id="L89">        menuItemReview.setItemServedDate(itemServedDate);</span>
+<span class="fc" id="L90">        menuItemReview.setStatus(&quot;Awaiting Moderation&quot;);</span>
+<span class="fc" id="L91">        menuItemReview.setRating(rating);</span>
+<span class="fc" id="L92">        menuItemReview.setReviewText(reviewText);</span>
+
+<span class="fc" id="L94">        LocalDateTime now = LocalDateTime.now();</span>
+<span class="fc" id="L95">        menuItemReview.setCreatedDate(now);</span>
+<span class="fc" id="L96">        menuItemReview.setLastEditedDate(now);</span>
+
+<span class="fc" id="L98">        MenuItemReview savedMenuItemReview = menuItemReviewRepository.save(menuItemReview);</span>
+
+<span class="fc" id="L100">        return savedMenuItemReview;</span>
+    }
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
