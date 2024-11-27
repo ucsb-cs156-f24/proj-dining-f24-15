@@ -45,18 +45,45 @@ import static org.mockito.Mockito.when;
 @Import(TestConfig.class)
 
 public class MenuItemReviewControllerTests extends ControllerTestCase {
+    @MockBean
+     MenuItemReviewRepository menuItemReviewRepository;
 
-        @MockBean
-        MenuItemReviewRepository menuItemReviewRepository;
+    @MockBean
+    MenuItemRepository menuItemRepository;
 
-        @MockBean
-        MenuItemRepository menuItemRepository;
+    @MockBean
+    UserRepository userRepository;
 
-        @MockBean
-        UserRepository userRepository;
+    @MockBean
+    CurrentUserService currentUserService;
+    
+    
+    // GET BY ID
+    @WithMockUser(roles = { "USER" })
+    @Test
+    public void user_can_get_their_reviews() throws Exception {
+        MenuItemReview review1 = MenuItemReview.builder()
+            .id(1L)
+            .studentUserId(100L)
+            .status("Awaiting Moderation")
+            .build();
 
-        @MockBean
-        CurrentUserService currentUserService;
+        when(menuItemReviewRepository.findByStudentUserId(100L))
+            .thenReturn(Arrays.asList(review1));
+
+        User mockUser = User.builder().id(100L).build();
+        CurrentUser mockCurrentUser = CurrentUser.builder().user(mockUser).build();
+
+        when(currentUserService.getCurrentUser()).thenReturn(mockCurrentUser);
+
+        MvcResult result = mockMvc.perform(get("/api/menuitemreviews/reviews"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        String responseContent = result.getResponse().getContentAsString();
+        assertTrue(responseContent.contains("\"id\":1"));
+        verify(menuItemReviewRepository, times(1)).findByStudentUserId(100L);
+    }
 
         // POST
         @Test
@@ -113,8 +140,6 @@ public class MenuItemReviewControllerTests extends ControllerTestCase {
                 verify(menuItemReviewRepository, times(1)).save(any(MenuItemReview.class));
         }
                
-
-
 
         @WithMockUser(roles = { "USER" })
         @Test
@@ -175,34 +200,4 @@ public class MenuItemReviewControllerTests extends ControllerTestCase {
                 verify(menuItemRepository, times(1)).findById(1L);
                 verify(menuItemReviewRepository, times(0)).save(any(MenuItemReview.class));
         }
-    
-    // GET BY ID
-    
-    @WithMockUser(roles = { "USER" })
-    @Test
-    public void user_can_get_their_reviews() throws Exception {
-        // Mock a review
-        MenuItemReview review1 = MenuItemReview.builder()
-            .id(1L)
-            .studentUserId(100L)
-            .status("Awaiting Moderation")
-            .build();
-
-        when(menuItemReviewRepository.findByStudentUserId(100L))
-            .thenReturn(Arrays.asList(review1));
-
-        User mockUser = User.builder().id(100L).build();
-        CurrentUser mockCurrentUser = CurrentUser.builder().user(mockUser).build();
-
-        when(currentUserService.getCurrentUser()).thenReturn(mockCurrentUser);
-
-        MvcResult result = mockMvc.perform(get("/api/menuitemreviews/reviews"))
-            .andExpect(status().isOk())
-            .andReturn();
-
-        String responseContent = result.getResponse().getContentAsString();
-        assertTrue(responseContent.contains("\"id\":1"));
-        verify(menuItemReviewRepository, times(1)).findByStudentUserId(100L);
-    }
-
 }
