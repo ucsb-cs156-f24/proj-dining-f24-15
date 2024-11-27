@@ -30,7 +30,6 @@ import org.springframework.http.HttpStatus;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 
-
 /**
  * This is a REST controller for MenuItemReview
  */
@@ -50,7 +49,6 @@ public class MenuItemReviewController extends ApiController {
     @Autowired
     private CurrentUserService currentUserService;
 
-
     /**
      * Get all reviews for a given user -> the user that is logged in
      */
@@ -63,5 +61,43 @@ public class MenuItemReviewController extends ApiController {
     }
 
     
+    /**
+     * Create a new menu item review -> all users
+     */
+
+    @Operation(summary= "Create a new menu item review")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    @PostMapping("/post")
+    public MenuItemReview postMenuItemReview(
+            @Parameter(name="itemId") @RequestParam long itemId,
+            @Parameter(name="itemServedDate", description="date (in iso format, e.g. YYYY-mm-ddTHH:MM:SS") @RequestParam("itemServedDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime itemServedDate,
+            @Parameter(name="rating", description="Leave a rating numerbed 1-5") @RequestParam int rating,
+            @Parameter(name="reviewText") @RequestParam String reviewText)
+    
+            throws JsonProcessingException {
+
+            MenuItem menuItem = menuItemRepository.findById(itemId).orElseThrow(() -> 
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "MenuItem with ID " + itemId + " not found"));
+
+        log.info("itemServedDate={}", itemServedDate);
+
+        long studentUserId = currentUserService.getCurrentUser().getUser().getId();
+
+        MenuItemReview menuItemReview = new MenuItemReview();
+        menuItemReview.setStudentUserId(studentUserId);
+        menuItemReview.setMenuItem(menuItem);
+        menuItemReview.setItemServedDate(itemServedDate);
+        menuItemReview.setStatus("Awaiting Moderation");
+        menuItemReview.setRating(rating);
+        menuItemReview.setReviewText(reviewText);
+
+        LocalDateTime now = LocalDateTime.now();
+        menuItemReview.setCreatedDate(now);
+        menuItemReview.setLastEditedDate(now);
+
+        MenuItemReview savedMenuItemReview = menuItemReviewRepository.save(menuItemReview);
+
+        return savedMenuItemReview;
+    }
 
 }

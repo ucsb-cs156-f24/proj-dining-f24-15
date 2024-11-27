@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 
+
 /*
 This is a repository file for MenuItemReview
  */
@@ -14,4 +15,5 @@ This is a repository file for MenuItemReview
  @Repository
  public interface MenuItemReviewRepository extends CrudRepository<MenuItemReview, Long> {
     List<MenuItemReview> findByStudentUserId(long studentUserId);
+    Iterable<MenuItemReview> findByStatus(String status);
  }

@@ -85,6 +85,122 @@ public class MenuItemReviewControllerTests extends ControllerTestCase {
         String responseContent = result.getResponse().getContentAsString();
         assertTrue(responseContent.contains("\"id\":1"));
         verify(menuItemReviewRepository, times(1)).findByStudentUserId(100L);
-}
+    }
+        // POST
+        @Test
+        public void logged_out_users_cannot_post() throws Exception {
+                mockMvc.perform(post("/api/menuitemreviews/post"))
+                                .andExpect(status().is(403));
+        }
+
+        @WithMockUser(roles = { "USER" })
+        @Test
+        public void logged_in_user_can_post_valid_menu_item_review() throws Exception {
+                MenuItem mockMenuItem = new MenuItem();
+                when(menuItemRepository.findById(1L)).thenReturn(Optional.of(mockMenuItem));
+
+                User mockUser = User.builder().id(100L).build();
+                CurrentUser mockCurrentUser = CurrentUser.builder().user(mockUser).build();
+
+                when(currentUserService.getCurrentUser()).thenReturn(mockCurrentUser);
+
+                LocalDateTime now = LocalDateTime.now();
+                MenuItemReview mockReview = MenuItemReview.builder()
+                        .id(1L)
+                        .studentUserId(100L)
+                        .menuItem(mockMenuItem)
+                        .itemServedDate(LocalDateTime.parse("2024-11-24T09:00:00"))
+                        .status("Awaiting Moderation")
+                        .rating(5)
+                        .reviewText("Great food!")
+                        .createdDate(now)
+                        .lastEditedDate(now)
+                        .build();
+
+                when(menuItemReviewRepository.save(any(MenuItemReview.class))).thenReturn(mockReview);
+
+                // Perform POST request
+                MvcResult result = mockMvc.perform(post("/api/menuitemreviews/post")
+                        .with(csrf())
+                        .param("itemId", "1")
+                        .param("itemServedDate", "2024-11-24T09:00:00")
+                        .param("rating", "5")
+                        .param("reviewText", "Great food!"))
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+                String responseContent = result.getResponse().getContentAsString();
+                assertTrue(responseContent.contains("\"id\":1"));
+                assertTrue(responseContent.contains("\"studentUserId\":100"));
+                assertTrue(responseContent.contains("\"status\":\"Awaiting Moderation\""));
+                assertTrue(responseContent.contains("\"reviewText\":\"Great food!\""));
+                assertTrue(responseContent.contains("\"createdDate\""));
+                assertTrue(responseContent.contains("\"lastEditedDate\""));
+
+                verify(menuItemRepository, times(1)).findById(1L);
+                verify(menuItemReviewRepository, times(1)).save(any(MenuItemReview.class));
+        }
+               
+
+        @WithMockUser(roles = { "USER" })
+        @Test
+        public void logged_in_user_verify_setters() throws Exception {
+                MenuItem mockMenuItem = new MenuItem();
+                when(menuItemRepository.findById(1L)).thenReturn(Optional.of(mockMenuItem));
+
+                User mockUser = User.builder()
+                        .id(100L)
+                        .build();
+
+                CurrentUser mockCurrentUser = CurrentUser.builder()
+                        .user(mockUser)
+                        .build();
+
+                when(currentUserService.getCurrentUser()).thenReturn(mockCurrentUser);
+
+                when(menuItemReviewRepository.save(any(MenuItemReview.class))).thenAnswer(invocation -> {
+                        MenuItemReview savedReview = invocation.getArgument(0);
+                        assertEquals(100L, savedReview.getStudentUserId());
+                        assertEquals(LocalDateTime.parse("2024-11-24T09:00:00"), savedReview.getItemServedDate());
+                        assertEquals(mockMenuItem, savedReview.getMenuItem());
+                        assertEquals("Awaiting Moderation", savedReview.getStatus());
+                        assertEquals(5, savedReview.getRating());
+                        assertEquals("Great food!", savedReview.getReviewText());
+                        assertNotNull(savedReview.getCreatedDate());
+                        assertNotNull(savedReview.getLastEditedDate());
+                        return savedReview;
+                });
+
+                mockMvc.perform(post("/api/menuitemreviews/post")
+                        .with(csrf())
+                        .param("itemId", "1")
+                        .param("itemServedDate", "2024-11-24T09:00:00")
+                        .param("rating", "5")
+                        .param("reviewText", "Great food!"))
+                        .andExpect(status().isOk());
+        }
+
+        @WithMockUser(roles = { "USER" })
+        @Test
+        public void logged_in_user_cannot_post_if_menu_item_does_not_exist() throws Exception {
+                when(menuItemRepository.findById(1L)).thenReturn(Optional.empty());
+
+                User mockUser = User.builder().id(100L).build();
+                CurrentUser mockCurrentUser = CurrentUser.builder().user(mockUser).build();
+
+                when(currentUserService.getCurrentUser()).thenReturn(mockCurrentUser);
+
+                mockMvc.perform(post("/api/menuitemreviews/post")
+                        .with(csrf())
+                        .param("itemId", "1")
+                        .param("itemServedDate", "2024-11-24T09:00:00")
+                        .param("rating", "5")
+                        .param("reviewText", "Great food!"))
+                        .andExpect(status().isNotFound());
+
+                verify(menuItemRepository, times(1)).findById(1L);
+                verify(menuItemReviewRepository, times(0)).save(any(MenuItemReview.class));
+        }
+
 
 }

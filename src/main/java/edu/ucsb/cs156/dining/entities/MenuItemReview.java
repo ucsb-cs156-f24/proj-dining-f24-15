@@ -1,6 +1,7 @@
 package edu.ucsb.cs156.dining.entities;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -37,7 +38,7 @@ public class MenuItemReview {
 
   private LocalDateTime itemServedDate;
   private String status;
-  private long moderatorUserId;
+  private Long moderatorUserId;
   private String moderatorComments;
   private int rating;
   private String reviewText;
