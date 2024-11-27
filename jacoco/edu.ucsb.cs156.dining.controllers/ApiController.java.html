@@ -35,7 +35,7 @@ import java.util.Map;
    * @return a map with the message
    */
   protected Object genericMessage(String message) {
-<span class="fc" id="L38">    return Map.of(&quot;message&quot;, message);</span>
+<span class="nc" id="L38">    return Map.of(&quot;message&quot;, message);</span>
   }
 
   /**
@@ -46,9 +46,9 @@ import java.util.Map;
   @ExceptionHandler({ EntityNotFoundException.class })
   @ResponseStatus(HttpStatus.NOT_FOUND)
   public Object handleGenericException(Throwable e) {
-<span class="fc" id="L49">    return Map.of(</span>
-<span class="fc" id="L50">      &quot;type&quot;, e.getClass().getSimpleName(),</span>
-<span class="fc" id="L51">      &quot;message&quot;, e.getMessage()</span>
+<span class="nc" id="L49">    return Map.of(</span>
+<span class="nc" id="L50">      &quot;type&quot;, e.getClass().getSimpleName(),</span>
+<span class="nc" id="L51">      &quot;message&quot;, e.getMessage()</span>
     );
   }
 }
